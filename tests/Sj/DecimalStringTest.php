@@ -9,7 +9,7 @@ class Sj_DecimalStringTest extends PHPUnit_Framework_TestCase
     public function itShouldReturnScale()
     {
         $decimalString = new Sj_DecimalString('23.5430');
-        $this->assertEquals(3, $decimalString->getScale());
+        $this->assertEquals(4, $decimalString->getScale());
     }
 
     /**
@@ -42,12 +42,12 @@ class Sj_DecimalStringTest extends PHPUnit_Framework_TestCase
     /**
      * @test
      * @dataProvider noneDecimalStrings
+     * @expectedException InvalidArgumentException
      * @param $value
      */
     public function itShouldNotBeADecimalString($value)
     {
-        $decimalString = new Sj_DecimalString($value);
-        $this->assertFalse($decimalString->isValid());
+        Sj_DecimalString::assertNumerical($value);
     }
 
     public function decimalStrings()
@@ -65,7 +65,7 @@ class Sj_DecimalStringTest extends PHPUnit_Framework_TestCase
      */
     public function itShouldBeADecimalString($value)
     {
-        $decimalString = new Sj_DecimalString($value);
-        $this->assertTrue($decimalString->isValid());
+        Sj_DecimalString::assertNumerical($value);
+        $this->assertTrue(true);
     }
 }

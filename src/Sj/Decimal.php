@@ -1,7 +1,12 @@
 <?php
-
+/**
+ * 
+ * 
+ */
 class Sj_Decimal
 {
+    const MAX_PRECISION = 14;
+
     /**
      * @var string
      */
@@ -12,13 +17,15 @@ class Sj_Decimal
     private $scale;
 
     /**
-     * @param string $value
+     * @param string $value must be numerical
      * @param integer|null $scale
      */
     public function __construct($value, $scale = null)
     {
+        Sj_DecimalString::assertNumerical($value);
+        
         $this->scale = (int)$scale;
-        $this->value = bcadd((string)$value, 0, $this->scale);
+        $this->value = (string)$value;
     }
 
     /**
@@ -37,9 +44,6 @@ class Sj_Decimal
             return new self($value, $decimalString->getScale());
         }
         if (is_string($value)) {
-            if (!$decimalString->isValid()) {
-                throw new InvalidArgumentException('string is not numeric.');
-            }
             return new self($value, $decimalString->getScale());
         }
         throw new InvalidArgumentException('value is not of an expected type.');
@@ -52,7 +56,31 @@ class Sj_Decimal
      */
     public static function valueOfUnscaledValueAndScale($unscaledValue, $scale)
     {
-        return new self((int) $unscaledValue, -(int)$scale);
+        return new self((int) $unscaledValue, -abs((int)$scale));
+    }
+
+    /**
+     * @param Sj_Decimal $addend
+     * @return Sj_Decimal
+     */
+    public function add(Sj_Decimal $addend)
+    {
+        $newScale = $this->maxScale($addend);
+        $newValue = bcadd($this->value, $addend->value, $newScale);
+
+        return $this->createDecimal($newValue, $newScale);
+    }
+
+    /**
+     * @param Sj_Decimal $subtrahend
+     * @return Sj_Decimal
+     */
+    public function subtract(Sj_Decimal $subtrahend)
+    {
+        $newScale = $this->maxScale($subtrahend);
+        $newValue = bcsub($this->value, $subtrahend->value, $newScale);
+
+        return $this->createDecimal($newValue, $newScale);
     }
 
     /**
@@ -62,8 +90,23 @@ class Sj_Decimal
     public function multiply(Sj_Decimal $multiplicand)
     {
         $newScale = $this->getScale() + $multiplicand->getScale();
-        $result = bcmul($this->value, $multiplicand->value, $newScale);
-        return self::valueOf($result);
+        $newValue = bcmul($this->value, $multiplicand->value, $newScale);
+
+        $roundedValue = $this->roundValue($newValue, $newScale);
+        return $this->createDecimal($roundedValue, $newScale);
+    }
+
+    /**
+     * @param Sj_Decimal $divisor
+     * @return Sj_Decimal
+     */
+    public function divide(Sj_Decimal $divisor)
+    {
+        $newScale = self::MAX_PRECISION;
+        $newValue = bcdiv($this->value, $divisor->value, $newScale);
+
+        $roundedValue = $this->roundValue($newValue, $newScale);
+        return self::valueOf($roundedValue);
     }
 
     /**
@@ -77,9 +120,20 @@ class Sj_Decimal
     /**
      * @return integer
      */
+    public function integerValue()
+    {
+        return (int)$this->value;
+    }
+
+    /**
+     * @return integer
+     */
     public function getUnscaledValue()
     {
-        return $this->calcUnscaledValue();
+        if ($this->scale < 0) {
+            return (int)$this->value;
+        }
+        return (int)$this->calcUnscaledValue();
     }
 
     /**
@@ -95,15 +149,7 @@ class Sj_Decimal
      */
     public function __toString()
     {
-        return $this->value;
-    }
-
-    /**
-     * @return bool
-     */
-    private function isNegativeScale()
-    {
-        return $this->scale < 0;
+        return (string)$this->value;
     }
 
     /**
@@ -113,7 +159,7 @@ class Sj_Decimal
     public function pow($n)
     {
         $n = (int) $n;
-        return $this->createDecimal($this->calcPow($n), -$n);
+        return $this->createDecimal($this->calcPow($n), $n);
     }
 
     /**
@@ -122,6 +168,97 @@ class Sj_Decimal
     public function getPrecision()
     {
         return strlen($this->getUnscaledValue());
+    }
+
+    /**
+     * @param integer $scale
+     * @param Sj_Rounder_Rounder $rounder
+     * @return Sj_Decimal
+     */
+    public function round($scale, Sj_Rounder_Rounder $rounder = null)
+    {
+        return self::valueOf(
+            $this->roundValue($this->value, $scale, $rounder)
+        );
+    }
+
+    /**
+     * @param Sj_Decimal $other
+     * @return boolean
+     */
+    public function isGreaterThan(Sj_Decimal $other)
+    {
+        $greatestScale = $this->maxScale($other);
+        return (1 == bccomp($this->value, $other->value, $greatestScale));
+    }
+
+    /**
+     * @param Sj_Decimal $other
+     * @return boolean
+     */
+    public function isLessThan(Sj_Decimal $other)
+    {
+        $greatestScale = $this->maxScale($other);
+        return (-1 == bccomp($this->value, $other->value, $greatestScale));
+    }
+
+    /**
+     * Two Sj_Decimal objects that are equal in value but have a different scale (like 2.0 and 2.00) are considered
+     * equal by this method.
+     * @param Sj_Decimal $other
+     * @return boolean
+     */
+    public function hasEqualValueTo(Sj_Decimal $other)
+    {
+        $greatestScale = $this->maxScale($other);
+        return (0 == bccomp($this->value, $other->value, $greatestScale));
+    }
+
+    /**
+     * Unlike hasEqualValueTo, this method considers two Sj_Decimal objects equal only if they are equal in value and
+     * scale (thus 2.0 is not equal to 2.00 when compared by this method).
+     * @param Sj_Decimal $other
+     * @return boolean
+     */
+    public function isEqualTo(Sj_Decimal $other)
+    {
+        return $this->hasEqualValueTo($other) && $this->scale == $other->scale;
+    }
+
+    /**
+     * @return Sj_Decimal
+     */
+    public function abs()
+    {
+        if ($this->isLessThan(Sj_Decimal::valueOf(0))) {
+            $value = bcsub(0, $this->value, $this->getScale());
+        } else {
+            $value = $this->value;
+        }
+        return $this->createDecimal($value, $this->scale);
+    }
+
+    /**
+     * @param Sj_Decimal $other
+     * @return integer
+     */
+    private function maxScale(Sj_Decimal $other)
+    {
+        return max($this->getScale(), $other->getScale());
+    }
+
+    /**
+     * @param double $value
+     * @param integer $scale
+     * @param Sj_Rounder_Rounder|null $rounder
+     * @return double
+     */
+    private function roundValue($value, $scale, Sj_Rounder_Rounder $rounder = null)
+    {
+        if ($rounder == null) {
+            $rounder = new Sj_Rounder_HalfUpRounder();
+        }
+        return $rounder->round($value, $scale);
     }
 
     /**
@@ -138,7 +275,7 @@ class Sj_Decimal
      */
     private function calcPow($n)
     {
-        return bcmul($this->value, bcpow(10, abs($n)));
+        return bcmul($this->value, bcpow(10, $n, self::MAX_PRECISION), $this->getScale());
     }
 
     /**

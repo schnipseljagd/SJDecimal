@@ -20,20 +20,22 @@ class Sj_DecimalString
      */
     public function getScale()
     {
-        $value = rtrim($this->value, '0');
-        $hit = strrpos($value, '.');
+        $hit = strrpos($this->value, '.');
         if ($hit === false) {
             return 0;
         } else {
-            return strlen($value) - $hit - 1;
+            return strlen($this->value) - $hit - 1;
         }
     }
 
     /**
-     * @return bool
+     * @throws InvalidArgumentException
+     * @param $value
      */
-    public function isValid()
+    public static function assertNumerical($value)
     {
-        return is_numeric($this->value);
+        if (!is_numeric($value)) {
+            throw new InvalidArgumentException('string is not numerical.');
+        }
     }
 }
