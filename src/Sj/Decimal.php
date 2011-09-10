@@ -1,8 +1,5 @@
 <?php
-/**
- * 
- * 
- */
+
 class Sj_Decimal
 {
     const MAX_PRECISION = 14;
@@ -50,16 +47,6 @@ class Sj_Decimal
     }
 
     /**
-     * @param integer $unscaledValue
-     * @param integer $scale
-     * @return Sj_Decimal
-     */
-    public static function valueOfUnscaledValueAndScale($unscaledValue, $scale)
-    {
-        return new self((int) $unscaledValue, -abs((int)$scale));
-    }
-
-    /**
      * @param Sj_Decimal $addend
      * @return Sj_Decimal
      */
@@ -90,10 +77,9 @@ class Sj_Decimal
     public function multiply(Sj_Decimal $multiplicand)
     {
         $newScale = $this->getScale() + $multiplicand->getScale();
-        $newValue = bcmul($this->value, $multiplicand->value, $newScale);
+        $newValue = bcmul($this->value, $multiplicand->value, self::MAX_PRECISION);
 
-        $roundedValue = $this->roundValue($newValue, $newScale);
-        return $this->createDecimal($roundedValue, $newScale);
+        return $this->createDecimal($newValue, $newScale);
     }
 
     /**
@@ -102,11 +88,14 @@ class Sj_Decimal
      */
     public function divide(Sj_Decimal $divisor)
     {
-        $newScale = self::MAX_PRECISION;
-        $newValue = bcdiv($this->value, $divisor->value, $newScale);
+        $newValue = bcdiv($this->value, $divisor->value, self::MAX_PRECISION);
 
-        $roundedValue = $this->roundValue($newValue, $newScale);
-        return self::valueOf($roundedValue);
+        if (strrpos($newValue, '.') !== false) {
+            $newValue = rtrim($newValue, '0');
+            $newValue = rtrim($newValue, '.');
+        }
+
+        return self::valueOf($newValue);
     }
 
     /**
