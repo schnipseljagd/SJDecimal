@@ -4,6 +4,9 @@ require_once 'src/Sj/Rounder/Rounder.php';
 require_once 'src/Sj/Rounder/HalfUpRounder.php';
 require_once 'src/Sj/Rounder/DownRounder.php';
 
+/**
+ * @covers Sj_Decimal
+ */
 class Sj_DecimalTest extends PHPUnit_Framework_TestCase
 {
     /**
@@ -117,24 +120,6 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function itShouldCreateByUnscaledValue()
-    {
-        $decimal = Sj_Decimal::valueOfUnscaledValueAndScale(235432, 4);
-        $this->assertEquals('235432', (string)$decimal);
-    }
-
-    /**
-     * @test
-     */
-    public function itShouldCreateByUnscaledValueWithNegativeScale()
-    {
-        $decimal = Sj_Decimal::valueOfUnscaledValueAndScale(235432, 4);
-        $this->assertEquals(-4, $decimal->getScale());
-    }
-
-    /**
-     * @test
-     */
     public function itShouldAddWithOtherDecimal()
     {
         $decimal = Sj_Decimal::valueOf(2.33);
@@ -185,10 +170,10 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
      */
     public function itShouldMultiplyWithOtherDecimal()
     {
-        $decimal = Sj_Decimal::valueOf(30);
+        $decimal = Sj_Decimal::valueOf(10.06);
         $this->assertEquals(
-            new Sj_Decimal('1.50', 2),
-            $decimal->multiply(Sj_Decimal::valueOf(0.05))
+            new Sj_Decimal('6.6396', 4),
+            $decimal->multiply(new Sj_Decimal(0.66, 2))
         );
     }
 
@@ -219,36 +204,12 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function itShouldMultiplyAndRoundHalfUp()
-    {
-        $decimal = Sj_Decimal::valueOf(10.06);
-        $this->assertEquals(
-            new Sj_Decimal('3.3533', 4),
-            $decimal->multiply(new Sj_Decimal(1/3, 2))
-        );
-    }
-
-    /**
-     * @test
-     */
     public function itShouldMultiplyWithDifferentScales()
     {
         $decimal = Sj_Decimal::valueOf(30.99);
         $this->assertEquals(
             new Sj_Decimal('92.966901', 6),
             $decimal->multiply(Sj_Decimal::valueOf(2.9999))
-        );
-    }
-
-    /**
-     * @test
-     */
-    public function itShouldMultiplyWithUnscaledDecimalRoundsByScaleZero()
-    {
-        $decimal = Sj_Decimal::valueOf(30);
-        $this->assertEquals(
-            Sj_Decimal::valueOfUnscaledValueAndScale(200, 2),
-            $decimal->multiply(Sj_Decimal::valueOfUnscaledValueAndScale(5, 2))
         );
     }
 
@@ -271,7 +232,7 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     {
         $decimal = Sj_Decimal::valueOf(100);
         $this->assertEquals(
-            new Sj_Decimal('30.00003', 5),
+            new Sj_Decimal('30.00003000003', 11),
             $decimal->divide(Sj_Decimal::valueOf(3.33333))
         );
     }
@@ -283,7 +244,7 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     {
         $decimal = Sj_Decimal::valueOf(10.06);
         $this->assertEquals(
-            Sj_Decimal::valueOf('3.35333333333'),
+            Sj_Decimal::valueOf('3.35333333333333'),
             $decimal->divide(Sj_Decimal::valueOf(3))
         );
     }
