@@ -89,11 +89,7 @@ class Sj_Decimal
     public function divide(Sj_Decimal $divisor)
     {
         $newValue = bcdiv($this->value, $divisor->value, self::MAX_PRECISION);
-
-        if (strrpos($newValue, '.') !== false) {
-            $newValue = rtrim($newValue, '0');
-            $newValue = rtrim($newValue, '.');
-        }
+        $newValue = $this->tryTrimBcMathZeros($newValue);
 
         return self::valueOf($newValue);
     }
@@ -225,6 +221,19 @@ class Sj_Decimal
             $value = $this->value;
         }
         return $this->createDecimal($value, $this->scale);
+    }
+
+    /**
+     * @param string $value
+     * @return string
+     */
+    private function tryTrimBcMathZeros($value)
+    {
+        if (strrpos($value, '.') !== false) {
+            $value = rtrim($value, '0');
+            $value = rtrim($value, '.');
+        }
+        return $value;
     }
 
     /**
