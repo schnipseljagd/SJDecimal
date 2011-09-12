@@ -20,7 +20,7 @@ class Sj_Decimal
     public function __construct($value, $scale = null)
     {
         Sj_DecimalString::assertNumerical($value);
-        
+
         $this->scale = (int)$scale;
         $this->value = (string)$value;
     }
@@ -77,7 +77,7 @@ class Sj_Decimal
     public function multiply(Sj_Decimal $multiplicand)
     {
         $newScale = $this->getScale() + $multiplicand->getScale();
-        $newValue = bcmul($this->value, $multiplicand->value, self::MAX_PRECISION);
+        $newValue = bcmul($this->value, $multiplicand->value, $newScale);
 
         return $this->createDecimal($newValue, $newScale);
     }
@@ -138,7 +138,7 @@ class Sj_Decimal
      */
     public function __toString()
     {
-        return (string)$this->value;
+        return $this->value;
     }
 
     /**
