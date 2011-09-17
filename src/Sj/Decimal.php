@@ -2,7 +2,8 @@
 
 class Sj_Decimal
 {
-    const MAX_PRECISION = 14;
+    const MAX_SCALE = 20;
+    const FIX_SCALE = 6;
 
     /**
      * @var string
@@ -76,10 +77,10 @@ class Sj_Decimal
      */
     public function multiply(Sj_Decimal $multiplicand)
     {
-        $newScale = $this->getScale() + $multiplicand->getScale();
-        $newValue = bcmul($this->value, $multiplicand->value, $newScale);
-
-        return $this->createDecimal($newValue, $newScale);
+        $newValue = bcmul($this->value, $multiplicand->value, self::MAX_SCALE);
+        
+        $newValue = $this->roundValue($newValue, self::FIX_SCALE);
+        return $this->createDecimal($newValue, self::FIX_SCALE);
     }
 
     /**
@@ -88,10 +89,10 @@ class Sj_Decimal
      */
     public function divide(Sj_Decimal $divisor)
     {
-        $newValue = bcdiv($this->value, $divisor->value, self::MAX_PRECISION);
-        $newValue = $this->tryTrimBcMathZeros($newValue);
+        $newValue = bcdiv($this->value, $divisor->value, self::MAX_SCALE);
 
-        return self::valueOf($newValue);
+        $newValue = $this->roundValue($newValue, self::FIX_SCALE);
+        return $this->createDecimal($newValue, self::FIX_SCALE);
     }
 
     /**
@@ -227,13 +228,20 @@ class Sj_Decimal
      * @param string $value
      * @return string
      */
-    private function tryTrimBcMathZeros($value)
+    private function trimBcMathZeros($value)
     {
-        if (strrpos($value, '.') !== false) {
-            $value = rtrim($value, '0');
-            $value = rtrim($value, '.');
-        }
+        $value = rtrim($value, '0');
+        $value = rtrim($value, '.');
         return $value;
+    }
+
+    /**
+     * @param $value
+     * @return integer|false
+     */
+    private function decimalSeparatorOffset($value)
+    {
+        return strpos($value, '.');
     }
 
     /**
@@ -273,7 +281,7 @@ class Sj_Decimal
      */
     private function calcPow($n)
     {
-        return bcmul($this->value, bcpow(10, $n, self::MAX_PRECISION), $this->getScale());
+        return bcmul($this->value, bcpow(10, $n, self::MAX_SCALE), $this->getScale());
     }
 
     /**

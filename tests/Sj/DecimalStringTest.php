@@ -1,6 +1,7 @@
 <?php
-require_once 'src/Sj/DecimalString.php';
-
+/**
+ * @covers Sj_DecimalString
+ */
 class Sj_DecimalStringTest extends PHPUnit_Framework_TestCase
 {
     /**

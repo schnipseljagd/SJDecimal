@@ -1,9 +1,4 @@
 <?php
-require_once 'src/Sj/Decimal.php';
-require_once 'src/Sj/Rounder/Rounder.php';
-require_once 'src/Sj/Rounder/HalfUpRounder.php';
-require_once 'src/Sj/Rounder/DownRounder.php';
-
 /**
  * @covers Sj_Decimal
  */
@@ -172,8 +167,20 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     {
         $decimal = Sj_Decimal::valueOf(10.06);
         $this->assertEquals(
-            new Sj_Decimal('6.6396', 4),
+            new Sj_Decimal('6.639600', 6),
             $decimal->multiply(new Sj_Decimal(0.66, 2))
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function itShouldMultiplyAndBewareOfTrailingZeros()
+    {
+        $decimal = Sj_Decimal::valueOf(100);
+        $this->assertEquals(
+            new Sj_Decimal('33.333333', 6),
+            $decimal->multiply(Sj_Decimal::valueOf(0.33333333))
         );
     }
 
@@ -182,21 +189,9 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
      */
     public function itShouldMultiplyWithPeriod()
     {
-        $decimal = Sj_Decimal::valueOf(100);
-        $this->assertEquals(
-            new Sj_Decimal('33.3333333333', 12),
-            $decimal->multiply(Sj_Decimal::valueOf(1/3))
-        );
-    }
-
-    /**
-     * @test
-     */
-    public function itShouldMultiplyWithAnotherPeriod()
-    {
         $decimal = Sj_Decimal::valueOf(2);
         $this->assertEquals(
-            new Sj_Decimal('0.666666666666', 12),
+            new Sj_Decimal('0.666667', 6),
             $decimal->multiply(Sj_Decimal::valueOf(1/3))
         );
     }
@@ -216,11 +211,35 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function itShouldMultiplyAndRound()
+    {
+        $decimal = Sj_Decimal::valueOf('0.333333');
+        $this->assertEquals(
+            Sj_Decimal::valueOf('0.166667'),
+            $decimal->multiply(Sj_Decimal::valueOf(0.5))
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function itShouldMultiplyWithMaxScale()
+    {
+        $decimal = Sj_Decimal::valueOf(10.0000000060000000006000000060000006);
+        $this->assertEquals(
+            Sj_Decimal::valueOf('33.333330'),
+            $decimal->multiply(Sj_Decimal::valueOf(3.333333))
+        );
+    }
+
+    /**
+     * @test
+     */
     public function itShouldDivideWithOtherDecimalValue()
     {
-        $decimal = Sj_Decimal::valueOf(9.9);
+        $decimal = Sj_Decimal::valueOf(12);
         $this->assertEquals(
-            new Sj_Decimal('3.3', 1),
+            new Sj_Decimal('4', 6),
             $decimal->divide(Sj_Decimal::valueOf(3))
         );
     }
@@ -232,7 +251,19 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     {
         $decimal = Sj_Decimal::valueOf(100);
         $this->assertEquals(
-            new Sj_Decimal('30.00003000003', 11),
+            new Sj_Decimal('30.000000', 6),
+            $decimal->divide(Sj_Decimal::valueOf(10/3))
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function itShouldDivideAndBewareOfTrailingZeros()
+    {
+        $decimal = Sj_Decimal::valueOf(100);
+        $this->assertEquals(
+            new Sj_Decimal('30.000030', 6),
             $decimal->divide(Sj_Decimal::valueOf(3.33333))
         );
     }
@@ -240,24 +271,38 @@ class Sj_DecimalTest extends PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function itShouldDivideAndRoundHalfUp()
+    public function itShouldDivideAndNotRound()
     {
-        $decimal = Sj_Decimal::valueOf(10.06);
+        $decimal = Sj_Decimal::valueOf(10.09);
         $this->assertEquals(
-            Sj_Decimal::valueOf('3.35333333333333'),
-            $decimal->divide(Sj_Decimal::valueOf(3))
+            new Sj_Decimal('3.057576', 6),
+            $decimal->divide(Sj_Decimal::valueOf(3.3))
+        );
+    }
+
+    public function divisionValueProvider()
+    {
+        return array(
+            array(0.2, 0.5, '0.400000', 6),
+            array(5, 2, '2.500000', 6),
+            array(8, 3, '2.666667', 6),
         );
     }
 
     /**
+     * @dataProvider divisionValueProvider
      * @test
+     * @param mixed $dividend
+     * @param mixed $divisor
+     * @param mixed $expectedValue
+     * @param integer $expectedScale
      */
-    public function itShouldDivideAndCalcScale()
+    public function itShouldDivideAndCalcScale($dividend, $divisor, $expectedValue, $expectedScale)
     {
-        $decimal = Sj_Decimal::valueOf(0.2);
+        $decimal = Sj_Decimal::valueOf($dividend);
         $this->assertEquals(
-            new Sj_Decimal('0.4', 1),
-            $decimal->divide(Sj_Decimal::valueOf(0.5))
+            new Sj_Decimal($expectedValue, $expectedScale),
+            $decimal->divide(Sj_Decimal::valueOf($divisor))
         );
     }
 

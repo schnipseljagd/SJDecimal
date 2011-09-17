@@ -1,16 +1,19 @@
 <?php
 
-class Sj_Rounder_DownRounder implements Sj_Rounder_Rounder
+class Sj_Rounder_DownRounder extends Sj_Rounder_AbstractRounder implements Sj_Rounder_Rounder
 {
     /**
-     * @param float $val
-     * @param int $precision
-     * @return float|int
+     * @param string $val
+     * @param int $scaleToRound
+     *
+     * @return string
      */
-    public function round($val, $precision = 0)
+    public function round($val, $scaleToRound = 0)
     {
-        $powerOfTen = pow(10, $precision);
+        $scale = $this->extractScaleFromString($val);
 
-        return floor($val * $powerOfTen) / $powerOfTen;
+        $pointShiftedVal = $this->shiftPointRight($val, $scaleToRound, $scale);
+        $intPart = $this->extractIntegerPart($pointShiftedVal);
+        return $this->shiftPointLeft($intPart, $scaleToRound, $scaleToRound);
     }
 }
