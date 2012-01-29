@@ -1,0 +1,19 @@
+{
+    "name": "schnipseljagd/decimal",
+    "description": "decimal value implementation for php",
+    "keywords": ["decimal","math","calculation"],
+    "homepage": "https://github.com/schnipseljagd/TestDataBuilder",
+    "license": "LGPL",
+    "authors": [
+        {
+            "name": "Joscha",
+            "email": "joscha@schnipseljagd.org"
+        }
+    ],
+    "require": {
+        "php": ">=5.2.0"
+    },
+    "autoload": {
+        "psr-0": { "Sj": "src/" }
+    }
+}
