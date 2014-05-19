@@ -30,6 +30,7 @@ class Sj_Rounder_DownRounderTest extends PHPUnit_Framework_TestCase
             array('9.99', 0, '9'),
             array('1.11', 1, '1.1'),
             array('9.99', 1, '9.9'),
+            array('1200000', 0, '1200000'),
         );
     }
 }

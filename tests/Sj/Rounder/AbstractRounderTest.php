@@ -25,6 +25,7 @@ class Sj_Rounder_AbstractRounderTest extends PHPUnit_Framework_TestCase
             array('5', 0, '5', 0),
             array('5', 2, '500', 0),
             array('5', 12, '5000000000000', 0),
+            array('1200000', 0, '1200000', 0),
         );
     }
 
