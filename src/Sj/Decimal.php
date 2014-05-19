@@ -67,7 +67,7 @@ class Sj_Decimal
         if (is_string($value)) {
             return new self($value, $decimalString->getScale());
         }
-        throw new InvalidArgumentException('value is not of an expected type.');
+        throw new InvalidArgumentException(sprintf('Value "%s" is not of an expected type.', $value));
     }
 
     /**
@@ -101,7 +101,7 @@ class Sj_Decimal
     public function multiply(Sj_Decimal $multiplicand)
     {
         $newValue = bcmul($this->value, $multiplicand->value, self::MAX_SCALE);
-        
+
         $newValue = $this->roundValue($newValue, self::FIX_SCALE);
         return $this->createDecimal($newValue, self::FIX_SCALE);
     }
